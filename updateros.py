@@ -24,18 +24,7 @@ import paramiko
 import socket
 import sys
 
-edge_router_ip = sys.argv[-1]
-ssh_port = 22
-username = None
-distance = 30
-
-# blacklist BGP-announced networks with direct-routing agreements
-bgp_networks = [
-    "44.24.240.0/20",   # HamWAN Puget Sound
-    "44.34.128.0/21",   # HamWAN Memphis
-    "44.103.0.0/19",    # W8CMN Mi6WAN
-]
-
+import router
 
 def get_encap():
     ampr = amprapi.AMPRAPI()
@@ -43,7 +32,9 @@ def get_encap():
 
 
 def filter_encap(route):
-    if route.network() in bgp_networks:
+    if route.network() in router.own_networks:
+        return False
+    if route.network() in router.bgp_networks:
         return False
     return route
 
@@ -112,7 +103,7 @@ def main():
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        ssh.connect(edge_router_ip, ssh_port, username)
+        ssh.connect(router.edge_router_ip, router.ssh_port, router.username, router.password)
         ros_routes = export_ros_routes(ssh)
         ros_ipips = export_ros_ipip_interfaces(ssh)
 
@@ -142,22 +133,20 @@ def main():
             commands.append("# removing old or modified routes")
         for route in routes_to_remove:
             commands.append("/ip route remove [find dst-address=\"%s\" gateway=\"%s\"]" % route)
-
         if ipips_to_remove:
             commands.append("# removing orphaned ipip interfaces")
         for interface, gateway in ipips_to_remove:
-            commands.append("/interface ipip remove %s" % interface)
-
+            commands.append("/interface ipip remove [find name=\"%s\"]" % (interface))
         if routes_to_add:
             commands.append("# adding new and modified routes")
         for entry in routes_to_add:
             interface = "ampr-%s" % entry['gatewayIP']
             commands.append("/interface ipip add !keepalive clamp-tcp-mss=yes "
                 "local-address=%s name=%s remote-address=%s comment=\"%s\"" % (
-                    edge_router_ip, interface, entry['gatewayIP'],
+                    router.edge_router_public_ip, interface, entry['gatewayIP'],
                     "AMPR last updated %s, added %s" % (
                         entry['updated'].date(), date.today())))
-            commands.append("/ip route add dst-address=%s gateway=%s distance=%s" % (entry.network(), interface, distance))
+            commands.append("/ip route add dst-address=%s gateway=%s distance=%s pref-src=%s" % (entry.network(), interface, router.distance, router.pref_source))
             commands.append("/ip neighbor discovery set %s discover=no" % (interface))
 
         if "-v" in sys.argv:
