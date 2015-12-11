@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+#
+# based on:
+#
+# http://wiki.mikrotik.com/wiki/Manual:API_Python3
+#
+# YO2LOJ 2015-Dec-11: added setVerbose() and unsetVerbose() to enable/disable debugging
+#
+
 import sys, posix, time, binascii, socket, select
 import hashlib
 
@@ -22,6 +30,10 @@ class ApiRos:
 
     def setVerbose(self):
         self.verbose = 1
+
+    def unsetVerbose(self):
+        self.verbose = 0
+
 
     def talk(self, words):
         if self.writeSentence(words) == 0: return

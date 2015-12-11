@@ -4,7 +4,7 @@ AMPR Portal API Python bindings
 Install Dependencies
 --------------------
 
-    sudo pip install paramiko requests
+    sudo pip install requests
 
 Usage
 -----
@@ -39,14 +39,15 @@ updateros.py
 
 Requests the list of encap routes from the AMPR Portal API, then updates the
 target Mikrotik router with new, removed, or changed routes.
+The RouterOS API is used for this purpose.
 
 Usage
 -----
 
-	./updateros.py [-v] [-n] [-f] TARGET_IP
+Access credentials have to be set in settings.py
+
+	./updateros.py [-v] [-f]
 
 `-f` force. Continue even when sanity check fails.
-
-`-n` dry-run. No changes will be made to target router.
 
 `-v` verbose mode. Commands to target router will be printed.

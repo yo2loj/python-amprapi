@@ -18,7 +18,8 @@
 # along with python-amprapi.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-#  modified for ROS API by YO2LOJ - 8/Dec/2015
+#  2015-Dec-8 - modified for ROS API by YO2LOJ
+#  2015-Dec-11 - use .proplist for speed-up
 #
 
 import amprapi
@@ -79,20 +80,21 @@ def parse_ros_ipip(rsp):
         return None
 
 
-def export_ros(api, command):
+def export_ros(api, command, proplist):
     cmd = []
     cmd.append(command)
+    cmd.append("=.proplist=" + proplist)
     rsp = api.talk(cmd)
     return rsp;
 
 def export_ros_routes(api):
     return filter(None, map(parse_ros_route,
-                            export_ros(api, "/ip/route/print")))
+                            export_ros(api, "/ip/route/print", "gateway,dst-address")))
 
 
 def export_ros_ipip_interfaces(api):
     return filter(None, map(parse_ros_ipip,
-                            export_ros(api, "/interface/ipip/print")))
+                            export_ros(api, "/interface/ipip/print", "name,remote-address")))
 
 
 def filter_ipip_ampr(ipips):
@@ -101,13 +103,16 @@ def filter_ipip_ampr(ipips):
 
 def command_ros(api, cmd, res_param):
     val = None
+    if (res_param != ""):
+        cmd.append("=.proplist=" + res_param)
     rsp = api.talk(cmd)
     res = rsp[0]
     if (res[0] == "!re"):
         attr = res[1]
-        val = attr[res_param]
-        if (val):
-            return val;
+        if (res_param != ""):
+            val = attr["=" + res_param]
+            if (val):
+                return val;
     return None
 
 def main():
@@ -177,7 +182,7 @@ def main():
             ac.append("/ip/route/print")
             ac.append("?dst-address=%s" % route[0])
             ac.append("?gateway=%s" % route[1])
-            ident = command_ros(apiros, ac, "=.id")
+            ident = command_ros(apiros, ac, ".id")
             # remove
             if (ident):
                 ac = []
@@ -193,7 +198,7 @@ def main():
             ac = []
             ac.append("/interface/ipip/print")
             ac.append("?name=%s" % interface)
-            ident = command_ros(apiros, ac, "=.id")
+            ident = command_ros(apiros, ac, ".id")
             # remove
             if (ident):
                 ac = []
@@ -241,7 +246,7 @@ def main():
             ac = []
             ac.append("/ip/neighbor/discovery/print")
             ac.append("?name=%s" % interface)
-            ident = command_ros(apiros, ac, "=.id")
+            ident = command_ros(apiros, ac, ".id")
             # disable
             if (ident):
                 ac = []
