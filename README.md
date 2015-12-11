@@ -1,5 +1,5 @@
-AMPR Portal API Python bindings
-===============================
+AMPR Portal API and RouterOS API Python bindings
+================================================
 
 Install Dependencies
 --------------------
@@ -36,8 +36,8 @@ Profile. Once you have set your API key, save your username and API key in
 rosapi.py
 =========
 Based on the RouterOS API access provided by Mikrotik on its wiki page.
-Access credentials are set in 'settings.py'
-for more details check http://wiki.mikrotik.com/wiki/Manual:API
+Access credentials are set in 'settings.py'.
+For more details check http://wiki.mikrotik.com/wiki/Manual:API
 
 updateros.py
 =============
